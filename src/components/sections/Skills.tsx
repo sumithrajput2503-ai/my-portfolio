@@ -16,19 +16,15 @@ const skillProgressMap: Record<string, number> = {
   Terraform: 78,
   Docker: 80,
   'GitHub Actions': 83,
-  Java: 88,
-  Python: 85,
-  TypeScript: 82,
-  React: 80,
   FastAPI: 83,
-  SQL: 86,
+  LangChain: 80,
+  React: 80,
+  RAG: 82,
+  'Vector Search': 78,
   OpenAI: 88,
   'Prompt Engineering': 90,
   'Agentic AI': 85,
   MCP: 82,
-  LangChain: 80,
-  'Vector Search': 78,
-  RAG: 82,
 }
 
 export function Skills() {
@@ -38,7 +34,7 @@ export function Skills() {
         <SectionHeading
           label="Skills"
           title="Technical Expertise"
-          description="A comprehensive toolkit spanning enterprise integration, cloud platforms, and AI technologies."
+          description="A comprehensive toolkit spanning enterprise integration, cloud platforms, frameworks, and AI technologies."
         />
 
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">

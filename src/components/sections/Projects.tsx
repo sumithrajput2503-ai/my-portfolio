@@ -1,13 +1,35 @@
-import { Brain, Network, Shield, Sparkles } from 'lucide-react'
-import { projects } from '@/data/portfolio'
+import {
+  Brain,
+  Building2,
+  Car,
+  HardHat,
+  Network,
+  Plane,
+  Shield,
+  Sparkles,
+} from 'lucide-react'
+import { projects, type Project } from '@/data/portfolio'
 import { SectionHeading } from '@/components/common/SectionHeading'
 import { ScrollReveal } from '@/components/common/ScrollReveal'
 import { TiltCard } from '@/components/common/TiltCard'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
 const iconMap = {
   brain: Brain,
-  shield: Shield,
+  building: Building2,
+  car: Car,
+  hardhat: HardHat,
   network: Network,
+  plane: Plane,
+  shield: Shield,
   sparkles: Sparkles,
 }
 
@@ -71,6 +93,45 @@ function ProjectIllustration({ type }: { type: string }) {
   )
 }
 
+function ResponsibilityList({ items }: { items: string[] }) {
+  return (
+    <ul className="space-y-2.5">
+      {items.map((item) => (
+        <li key={item} className="text-sm text-muted-foreground flex items-start gap-2.5">
+          <span className="text-primary mt-2 w-1 h-1 rounded-full bg-primary shrink-0" />
+          <span className="leading-relaxed">{item}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function ProjectDetails({ project }: { project: Project }) {
+  const sections =
+    project.responsibilitySections ??
+    (project.responsibilities.length > 0
+      ? [{ items: project.responsibilities }]
+      : [])
+
+  return (
+    <div className="space-y-5">
+      {sections.map((section) => (
+        <div key={section.title ?? 'responsibilities'}>
+          {section.title && (
+            <h4 className="text-sm font-semibold text-foreground mb-3">{section.title}</h4>
+          )}
+          <ResponsibilityList items={section.items} />
+        </div>
+      ))}
+
+      <div className="rounded-xl border border-white/6 bg-white/[0.02] p-4">
+        <p className="text-xs font-medium text-foreground/80 mb-2">Disclaimer</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{project.disclaimer}</p>
+      </div>
+    </div>
+  )
+}
+
 export function Projects() {
   return (
     <section id="projects" className="section-padding relative">
@@ -78,7 +139,7 @@ export function Projects() {
         <SectionHeading
           label="Featured Projects"
           title="Enterprise Impact"
-          description="Selected projects showcasing integration architecture, AI innovation, and cloud-native solutions."
+          description="Client engagements showcasing enterprise integration architecture, secure API delivery, and platform modernization."
         />
 
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
@@ -86,17 +147,25 @@ export function Projects() {
             <ScrollReveal key={project.id} delay={i * 0.1}>
               <TiltCard>
                 <article
-                  className={`glass rounded-2xl overflow-hidden group hover:glow-blue transition-all duration-500 bg-gradient-to-br ${project.gradient}`}
+                  className={`glass rounded-2xl overflow-hidden group hover:glow-blue transition-all duration-500 bg-gradient-to-br ${project.gradient} h-full flex flex-col`}
                 >
                   <ProjectIllustration type={project.icon} />
-                  <div className="p-6 lg:p-8">
-                    <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
-                      {project.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-5">
+                  <div className="p-6 lg:p-8 flex flex-col flex-1">
+                    <div className="mb-3">
+                      <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                        {project.title}
+                      </h3>
+                      <p className="text-sm text-primary mt-1">{project.role}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {project.employer} · {project.period}
+                      </p>
+                    </div>
+
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-5 flex-1">
                       {project.description}
                     </p>
-                    <div className="flex flex-wrap gap-2">
+
+                    <div className="flex flex-wrap gap-2 mb-5">
                       {project.tech.map((tech) => (
                         <span
                           key={tech}
@@ -106,6 +175,23 @@ export function Projects() {
                         </span>
                       ))}
                     </div>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full">
+                          View Responsibilities
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{project.title}</DialogTitle>
+                          <DialogDescription>
+                            {project.role} · {project.employer} · {project.period}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <ProjectDetails project={project} />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </article>
               </TiltCard>
