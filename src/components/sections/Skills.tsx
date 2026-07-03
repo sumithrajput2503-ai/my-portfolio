@@ -19,6 +19,7 @@ const skillProgressMap: Record<string, number> = {
   FastAPI: 83,
   LangChain: 80,
   React: 80,
+  'Spring Boot': 84,
   RAG: 82,
   'Vector Search': 78,
   OpenAI: 88,

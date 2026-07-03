@@ -309,7 +309,7 @@ export const skillCategories = [
   },
   {
     title: 'Frameworks',
-    skills: ['FastAPI', 'LangChain', 'React', 'RAG', 'Vector Search'],
+    skills: ['FastAPI', 'LangChain', 'React', 'Spring Boot', 'RAG', 'Vector Search'],
   },
   {
     title: 'AI',
