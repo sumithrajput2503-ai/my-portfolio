@@ -19,6 +19,12 @@ export default defineConfig(({ command, mode }) => {
     proxy['/api/v1'] = {
       target: portfolioAiApiUrl,
       changeOrigin: true,
+      configure: (proxyServer) => {
+        proxyServer.on('proxyReq', (proxyReq) => {
+          // CloudHub returns an empty 200 when Origin is not on its allowlist.
+          proxyReq.removeHeader('origin')
+        })
+      },
     }
   }
 
