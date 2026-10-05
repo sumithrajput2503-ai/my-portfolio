@@ -8,8 +8,10 @@ import {
   Shield,
   Sparkles,
 } from 'lucide-react'
-import { projects, type Project } from '@/data/portfolio'
+import { usePortfolioData } from '@/context/PortfolioProvider'
+import type { CaseStudy, Project } from '@/types/experienceApi'
 import { SectionHeading } from '@/components/common/SectionHeading'
+import { SectionStatus } from '@/components/common/SectionStatus'
 import { ScrollReveal } from '@/components/common/ScrollReveal'
 import { TiltCard } from '@/components/common/TiltCard'
 import { Button } from '@/components/ui/button'
@@ -21,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { caseStudyForProject, scaleEntries } from '@/lib/portfolioView'
 
 const iconMap = {
   brain: Brain,
@@ -32,6 +35,16 @@ const iconMap = {
   shield: Shield,
   sparkles: Sparkles,
 }
+
+const cardGradients = [
+  'from-slate-600/20 via-blue-500/10 to-zinc-500/20',
+  'from-emerald-600/20 via-blue-500/10 to-teal-500/20',
+  'from-violet-600/20 via-blue-500/10 to-purple-500/20',
+  'from-sky-600/20 via-blue-500/10 to-indigo-500/20',
+  'from-red-600/20 via-rose-500/10 to-orange-500/20',
+]
+
+const cardIcons = ['car', 'hardhat', 'shield', 'plane', 'building']
 
 function ProjectIllustration({ type }: { type: string }) {
   const Icon = iconMap[type as keyof typeof iconMap] || Network
@@ -93,7 +106,7 @@ function ProjectIllustration({ type }: { type: string }) {
   )
 }
 
-function ResponsibilityList({ items }: { items: string[] }) {
+function DetailList({ items }: { items: string[] }) {
   return (
     <ul className="space-y-2.5">
       {items.map((item) => (
@@ -106,33 +119,92 @@ function ResponsibilityList({ items }: { items: string[] }) {
   )
 }
 
-function ProjectDetails({ project }: { project: Project }) {
-  const sections =
-    project.responsibilitySections ??
-    (project.responsibilities.length > 0
-      ? [{ items: project.responsibilities }]
-      : [])
+function DetailBlock({ title, items }: { title: string; items?: string[] }) {
+  if (!items || items.length === 0) return null
+
+  return (
+    <div>
+      <h4 className="text-sm font-semibold text-foreground mb-3">{title}</h4>
+      <DetailList items={items} />
+    </div>
+  )
+}
+
+function ProjectDetails({ project, caseStudy }: { project: Project; caseStudy?: CaseStudy }) {
+  const architecture = [
+    ...(caseStudy?.architecture?.layers ?? []),
+    ...(caseStudy?.architecture?.keySystems ?? []),
+    ...(caseStudy?.architecture?.keyPlatforms ?? []),
+  ]
+  const scale = scaleEntries(caseStudy?.scale)
 
   return (
     <div className="space-y-5">
-      {sections.map((section) => (
-        <div key={section.title ?? 'responsibilities'}>
-          {section.title && (
-            <h4 className="text-sm font-semibold text-foreground mb-3">{section.title}</h4>
-          )}
-          <ResponsibilityList items={section.items} />
-        </div>
-      ))}
+      {project.companyOverview && (
+        <p className="text-sm text-muted-foreground leading-relaxed">{project.companyOverview}</p>
+      )}
 
-      <div className="rounded-xl border border-white/6 bg-white/[0.02] p-4">
-        <p className="text-xs font-medium text-foreground/80 mb-2">Disclaimer</p>
-        <p className="text-xs text-muted-foreground leading-relaxed">{project.disclaimer}</p>
-      </div>
+      <DetailBlock title="Key contributions" items={project.keyContributions} />
+
+      {caseStudy && (
+        <>
+          {caseStudy.summary && (
+            <p className="text-sm text-muted-foreground leading-relaxed">{caseStudy.summary}</p>
+          )}
+          {caseStudy.businessContext && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-3">Business context</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">{caseStudy.businessContext}</p>
+            </div>
+          )}
+          <DetailBlock title="Challenge" items={caseStudy.challenge} />
+          <DetailBlock title="Solution" items={caseStudy.solution} />
+          {caseStudy.architecture?.pattern && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-3">Architecture</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">{caseStudy.architecture.pattern}</p>
+            </div>
+          )}
+          <DetailBlock title="Architecture detail" items={architecture} />
+          <DetailBlock title="Role" items={caseStudy.role} />
+          <DetailBlock title="Capabilities" items={caseStudy.capabilitiesDemonstrated} />
+          {scale.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-3">Scale</h4>
+              <DetailList items={scale.map((entry) => `${entry.label}: ${entry.value}`)} />
+            </div>
+          )}
+          {caseStudy.website && (
+            <a
+              href={caseStudy.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              {caseStudy.website}
+            </a>
+          )}
+        </>
+      )}
+
+      {project.companyWebsite && project.companyWebsite !== caseStudy?.website && (
+        <a
+          href={project.companyWebsite}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline"
+        >
+          {project.companyWebsite}
+        </a>
+      )}
     </div>
   )
 }
 
 export function Projects() {
+  const { loading, error, projects, caseStudies } = usePortfolioData()
+  const matchedIds = new Set<string>()
+
   return (
     <section id="projects" className="section-padding relative">
       <div className="container-custom">
@@ -142,62 +214,115 @@ export function Projects() {
           description="Client engagements showcasing enterprise integration architecture, secure API delivery, and platform modernization."
         />
 
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-          {projects.map((project, i) => (
-            <ScrollReveal key={project.id} delay={i * 0.1}>
-              <TiltCard>
-                <article
-                  className={`glass rounded-2xl overflow-hidden group hover:glow-blue transition-all duration-500 bg-gradient-to-br ${project.gradient} h-full flex flex-col`}
-                >
-                  <ProjectIllustration type={project.icon} />
-                  <div className="p-6 lg:p-8 flex flex-col flex-1">
-                    <div className="mb-3">
-                      <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
-                        {project.title}
-                      </h3>
-                      <p className="text-sm text-primary mt-1">{project.role}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {project.employer} · {project.period}
-                      </p>
-                    </div>
+        <SectionStatus loading={loading} error={error} />
 
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-5 flex-1">
-                      {project.description}
-                    </p>
+        {!loading && !error && (
+          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+            {projects.map((project, i) => {
+              const caseStudy = caseStudyForProject(project.id, project.company, caseStudies)
+              if (caseStudy) matchedIds.add(caseStudy.id)
+              const gradient = cardGradients[i % cardGradients.length]
+              const icon = cardIcons[i % cardIcons.length]
 
-                    <div className="flex flex-wrap gap-2 mb-5">
-                      {project.tech.map((tech) => (
-                        <span
-                          key={tech}
-                          className="text-xs glass rounded-full px-3 py-1 text-muted-foreground"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
+              return (
+                <ScrollReveal key={project.id} delay={i * 0.1}>
+                  <TiltCard>
+                    <article
+                      className={`glass rounded-2xl overflow-hidden group hover:glow-blue transition-all duration-500 bg-gradient-to-br ${gradient} h-full flex flex-col`}
+                    >
+                      <ProjectIllustration type={icon} />
+                      <div className="p-6 lg:p-8 flex flex-col flex-1">
+                        <div className="mb-3">
+                          <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                            {project.name}
+                          </h3>
+                          <p className="text-sm text-primary mt-1">{project.industry}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{project.company}</p>
+                        </div>
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="w-full">
-                          View Responsibilities
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>{project.title}</DialogTitle>
-                          <DialogDescription>
-                            {project.role} · {project.employer} · {project.period}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <ProjectDetails project={project} />
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </article>
-              </TiltCard>
-            </ScrollReveal>
-          ))}
-        </div>
+                        <p className="text-muted-foreground text-sm leading-relaxed mb-5 flex-1">
+                          {project.description}
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 mb-5">
+                          {project.technologies.map((tech) => (
+                            <span
+                              key={tech}
+                              className="text-xs glass rounded-full px-3 py-1 text-muted-foreground"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-full">
+                              View Responsibilities
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>{project.name}</DialogTitle>
+                              <DialogDescription>
+                                {project.industry} · {project.company}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <ProjectDetails project={project} caseStudy={caseStudy} />
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </article>
+                  </TiltCard>
+                </ScrollReveal>
+              )
+            })}
+
+            {caseStudies
+              .filter((study) => !matchedIds.has(study.id))
+              .map((study, i) => {
+                const index = projects.length + i
+                const gradient = cardGradients[index % cardGradients.length]
+                const icon = cardIcons[index % cardIcons.length]
+
+                return (
+                  <ScrollReveal key={study.id} delay={index * 0.1}>
+                    <TiltCard>
+                      <article
+                        className={`glass rounded-2xl overflow-hidden group hover:glow-blue transition-all duration-500 bg-gradient-to-br ${gradient} h-full flex flex-col`}
+                      >
+                        <ProjectIllustration type={icon} />
+                        <div className="p-6 lg:p-8 flex flex-col flex-1">
+                          <div className="mb-3">
+                            <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                              {study.title}
+                            </h3>
+                            {study.industry && (
+                              <p className="text-sm text-primary mt-1">{study.industry}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">{study.company}</p>
+                          </div>
+                          <p className="text-muted-foreground text-sm leading-relaxed mb-5 flex-1">
+                            {study.summary}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {study.technologies.map((tech) => (
+                              <span
+                                key={tech}
+                                className="text-xs glass rounded-full px-3 py-1 text-muted-foreground"
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </article>
+                    </TiltCard>
+                  </ScrollReveal>
+                )
+              })}
+          </div>
+        )}
       </div>
     </section>
   )

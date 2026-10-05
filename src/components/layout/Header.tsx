@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
-import { navLinks } from '@/data/portfolio'
+import { navLinks } from '@/data/site'
+import { usePortfolioData } from '@/context/PortfolioProvider'
 import { cn, scrollToSection } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { profile } = usePortfolioData()
+  const mark = profile ? `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}` : ''
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -36,7 +39,7 @@ export function Header() {
           className="text-lg font-bold tracking-tight hover:text-primary transition-colors cursor-pointer"
           aria-label="Go to top"
         >
-          SK<span className="text-primary">.</span>
+          {mark}<span className="text-primary">.</span>
         </button>
 
         <nav className="hidden md:flex items-center gap-8" aria-label="Main navigation">

@@ -1,10 +1,12 @@
 import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { HelmetProvider } from 'react-helmet-async'
+import { PortfolioProvider } from '@/context/PortfolioProvider'
 import { SEO } from '@/components/layout/SEO'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { Hero } from '@/components/sections/Hero'
+import { AIChat } from '@/components/ai-chat/AIChat'
 import { MouseFollower } from '@/components/effects/MouseFollower'
 import { ParticleBackground } from '@/components/effects/ParticleBackground'
 import { GradientBlobs } from '@/components/effects/GradientBlobs'
@@ -48,6 +50,7 @@ function LazySection({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <HelmetProvider>
+      <PortfolioProvider>
       <SEO />
       <div className="relative min-h-screen">
         <GradientBlobs />
@@ -61,6 +64,7 @@ export default function App() {
           transition={{ duration: 0.5 }}
         >
           <Hero />
+          <AIChat />
           <LazySection>
             <About />
           </LazySection>
@@ -86,6 +90,7 @@ export default function App() {
 
         <Footer />
       </div>
+      </PortfolioProvider>
     </HelmetProvider>
   )
 }

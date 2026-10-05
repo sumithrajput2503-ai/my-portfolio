@@ -1,11 +1,15 @@
 import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowDown, Download, Mail } from 'lucide-react'
-import { personalInfo } from '@/data/portfolio'
+import { siteAssets } from '@/data/site'
+import { usePortfolioData } from '@/context/PortfolioProvider'
+import { resolveExperienceAsset } from '@/services/experienceApi'
 import { MagneticButton } from '@/components/common/MagneticButton'
 import { Button } from '@/components/ui/button'
 import { scrollToSection } from '@/lib/utils'
 import { FloatingIcons } from '@/components/effects/FloatingIcons'
+import { fullName, titleLines } from '@/lib/portfolioView'
+import { PORTFOLIO_UNAVAILABLE } from '@/services/experienceApi'
 
 const NetworkGlobe = lazy(() =>
   import('@/components/effects/NetworkGlobe').then((m) => ({
@@ -13,13 +17,16 @@ const NetworkGlobe = lazy(() =>
   }))
 )
 
-const headlines = [
-  'Integration Engineer',
-  'MuleSoft Specialist',
-  'AI Product Engineer',
-]
-
 export function Hero() {
+  const { loading, error, profile } = usePortfolioData()
+  const name = profile ? fullName(profile) : ''
+  const photo = resolveExperienceAsset(profile?.photo)
+  const photoAlt = name ? `Portrait of ${name}` : 'Profile photo'
+  const headlines = profile ? titleLines(profile.title) : []
+  const resumeName = profile
+    ? `${profile.firstName}_${profile.lastName}_Resume.pdf`.replace(/\s+/g, '')
+    : 'resume.pdf'
+
   return (
     <section
       id="hero"
@@ -49,50 +56,71 @@ export function Hero() {
               className="sm:hidden mb-8 mx-auto max-w-[220px]"
             >
               <div className="glass rounded-2xl p-1.5 glow-blue overflow-hidden">
-                <img
-                  src={personalInfo.profilePhoto}
-                  alt={personalInfo.profilePhotoAlt}
-                  className="w-full aspect-[3/4] object-cover object-top rounded-xl"
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                {photo && (
+                  <img
+                    src={photo}
+                    alt={photoAlt}
+                    className="w-full aspect-[3/4] object-cover object-top rounded-xl"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                )}
               </div>
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-6"
-            >
-              <span className="text-gradient">{personalInfo.name}</span>
-            </motion.h1>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="space-y-2 mb-8"
-            >
-              {headlines.map((line, i) => (
-                <p
-                  key={line}
-                  className="text-xl sm:text-2xl md:text-3xl font-light text-muted-foreground"
-                  style={{ animationDelay: `${i * 0.1}s` }}
+            {loading ? (
+              <div className="h-16 mb-6 flex items-center" role="status" aria-live="polite">
+                <span className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <span className="sr-only">Loading portfolio information</span>
+              </div>
+            ) : error || !profile ? (
+              <p className="text-muted-foreground mb-10" role="alert">
+                {error ?? PORTFOLIO_UNAVAILABLE}
+              </p>
+            ) : (
+              <>
+                <motion.h1
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.1 }}
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1] mb-6"
                 >
-                  {line}
-                </p>
-              ))}
-            </motion.div>
+                  <span className="text-gradient">{name}</span>
+                </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="text-lg text-muted-foreground max-w-xl mb-10 leading-relaxed"
-            >
-              {personalInfo.subtitle}
-            </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.2 }}
+                  className="space-y-2 mb-8"
+                >
+                  {headlines.map((line, i) => (
+                    <p
+                      key={line}
+                      className="text-xl sm:text-2xl md:text-3xl font-light text-muted-foreground"
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    >
+                      {line}
+                    </p>
+                  ))}
+                  {profile.currentRole && (
+                    <p className="text-base sm:text-lg text-primary pt-2">
+                      {profile.currentRole}
+                      {profile.currentCompany ? ` · ${profile.currentCompany}` : ''}
+                    </p>
+                  )}
+                </motion.div>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.3 }}
+                  className="text-lg text-muted-foreground max-w-xl mb-10 leading-relaxed"
+                >
+                  {profile.headline}
+                </motion.p>
+              </>
+            )}
 
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -107,8 +135,8 @@ export function Hero() {
               </MagneticButton>
               <MagneticButton
                 as="a"
-                href={personalInfo.resumeUrl}
-                download="Sumith_Singh_Resume.pdf"
+                href={siteAssets.resumeUrl}
+                download={resumeName}
                 className="inline-flex items-center justify-center gap-2 h-12 px-8 text-base rounded-full border border-white/10 bg-transparent hover:bg-white/5 hover:border-white/20 transition-all duration-300"
               >
                 <Download className="w-4 h-4" />
@@ -141,13 +169,15 @@ export function Hero() {
 
             <div className="absolute inset-0 rounded-3xl glass glow-blue-strong overflow-hidden border border-white/10 p-1.5">
               <div className="relative w-full h-full rounded-[1.25rem] overflow-hidden">
-                <img
-                  src={personalInfo.profilePhoto}
-                  alt={personalInfo.profilePhotoAlt}
-                  className="w-full h-full object-cover object-top"
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                {photo && (
+                  <img
+                    src={photo}
+                    alt={photoAlt}
+                    className="w-full h-full object-cover object-top"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
                 <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[1.25rem]" />
               </div>
