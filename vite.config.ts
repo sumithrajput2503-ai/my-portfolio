@@ -1,5 +1,5 @@
 import path from 'path'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -13,32 +13,25 @@ export default defineConfig(({ command, mode }) => {
     )
   }
 
-  const portfolioAiProxy = portfolioAiApiUrl
-    ? {
-        '/api/v1': {
-          target: portfolioAiApiUrl,
-          changeOrigin: true,
-        },
-      }
-    : {}
+  const proxy: Record<string, ProxyOptions> = {}
+
+  if (portfolioAiApiUrl) {
+    proxy['/api/v1'] = {
+      target: portfolioAiApiUrl,
+      changeOrigin: true,
+    }
+  }
 
   const experienceApiUrl = env.VITE_EXPERIENCE_API_BASE_URL?.trim().replace(/\/$/, '')
-  const experienceProxy =
-    experienceApiUrl && !experienceApiUrl.startsWith('/')
-      ? {
-          '/exp-api': {
-            target: new URL(experienceApiUrl).origin,
-            changeOrigin: true,
-            rewrite: (requestPath: string) =>
-              requestPath.replace(
-                /^\/exp-api/,
-                new URL(experienceApiUrl).pathname.replace(/\/$/, ''),
-              ),
-          },
-        }
-      : {}
-
-  const proxy = { ...experienceProxy, ...portfolioAiProxy }
+  if (experienceApiUrl && !experienceApiUrl.startsWith('/')) {
+    const experienceUrl = new URL(experienceApiUrl)
+    const experienceBasePath = experienceUrl.pathname.replace(/\/$/, '')
+    proxy['/exp-api'] = {
+      target: experienceUrl.origin,
+      changeOrigin: true,
+      rewrite: (requestPath) => requestPath.replace(/^\/exp-api/, experienceBasePath),
+    }
+  }
 
   return {
     plugins: [react(), tailwindcss()],
