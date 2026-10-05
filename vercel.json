@@ -7,6 +7,10 @@
       "source": "/exp-api/:path*",
       "destination": "https://my-portfolio-exp-api-np3l5c.5sc6y6-3.usa-e2.cloudhub.io/api/v1/:path*"
     },
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://portfolio-ai-process-api-np3l5c.5sc6y6-3.usa-e2.cloudhub.io/api/v1/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
