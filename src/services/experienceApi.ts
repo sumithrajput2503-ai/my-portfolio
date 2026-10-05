@@ -8,8 +8,21 @@ import type {
 
 export const PORTFOLIO_UNAVAILABLE = 'Portfolio information is temporarily unavailable.'
 
-function baseUrl(): string {
+/** Same-origin path proxied to the Experience API by Vite locally and Vercel in production. */
+export const EXPERIENCE_API_PROXY_PATH = '/exp-api'
+
+function configuredBaseUrl(): string {
   return (import.meta.env.VITE_EXPERIENCE_API_BASE_URL ?? '').trim().replace(/\/$/, '')
+}
+
+function baseUrl(): string {
+  const configured = configuredBaseUrl()
+  if (configured.startsWith('/')) return configured
+  // The browser always calls the same-origin proxy. CloudHub only echoes
+  // Access-Control-Allow-Origin for http://localhost:5173, so a direct call
+  // from Vercel (or any other port) is blocked even when the API returns 200.
+  if (typeof window !== 'undefined') return EXPERIENCE_API_PROXY_PATH
+  return configured
 }
 
 export function resolveExperienceAsset(path: string | undefined) {

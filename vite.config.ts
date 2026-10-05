@@ -20,15 +20,33 @@ export default defineConfig(({ command, mode }) => {
           changeOrigin: true,
         },
       }
-    : undefined
+    : {}
+
+  const experienceApiUrl = env.VITE_EXPERIENCE_API_BASE_URL?.trim().replace(/\/$/, '')
+  const experienceProxy =
+    experienceApiUrl && !experienceApiUrl.startsWith('/')
+      ? {
+          '/exp-api': {
+            target: new URL(experienceApiUrl).origin,
+            changeOrigin: true,
+            rewrite: (requestPath: string) =>
+              requestPath.replace(
+                /^\/exp-api/,
+                new URL(experienceApiUrl).pathname.replace(/\/$/, ''),
+              ),
+          },
+        }
+      : {}
+
+  const proxy = { ...experienceProxy, ...portfolioAiProxy }
 
   return {
     plugins: [react(), tailwindcss()],
     server: {
-      proxy: portfolioAiProxy,
+      proxy,
     },
     preview: {
-      proxy: portfolioAiProxy,
+      proxy,
     },
     resolve: {
       alias: {
